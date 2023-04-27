@@ -1,0 +1,3 @@
+This folder has the code used on the microcontroller attached to the glove. It allows us to send values from the pressure sensor to the central device which for us 
+is another microcontroller. One sensor determines the intensity of pressure applied in a percentage to determine the thickness of a stroke. The other sensor
+determines if the user wants to do a left click or right click.
