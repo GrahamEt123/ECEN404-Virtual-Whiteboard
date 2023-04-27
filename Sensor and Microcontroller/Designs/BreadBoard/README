@@ -1,1 +1,3 @@
-
+The BreadBoard design was used for the majority of testing. It produced most of the data found and contributed to creating the graphs presented in the other folder. I 
+introduced a voltage divider used for the FSR and evaluated data produced from the sensor. This allowed me to develop the code utilized for this subsystem, including 
+reading the register values, which was necessary to determine which sensor was activated. 
