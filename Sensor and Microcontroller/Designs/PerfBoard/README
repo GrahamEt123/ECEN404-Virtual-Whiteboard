@@ -1,3 +1,2 @@
-All sensors and components are soldered on PerfBoard design for demo. A PCB design will be created in 404 to initiate the process of integration. Once integration 
-starts, the glove design will begin and be implemented with the PCB design. The glove design will be utilized and incorporate the needs of both power and 
-image processing subsystems.
+All sensors and components are soldered on the PerfBoard design for demo. A PCB design will be created in 404 to initiate the integration process. Once integration starts, the glove design will begin and be implemented with the PCB design. The glove design will be utilized and incorporate the needs of both power and image processing subsystems.
+
