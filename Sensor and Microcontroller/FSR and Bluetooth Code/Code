@@ -1,1 +1,125 @@
+#include "Adafruit_BluefruitLE_SPI.h"  // Include the Adafruit BluefruitLE_SPI library
+
+/*These lines define a set of constants to be used later in the code. 
+Specifically, they define the chip select pin (CS), interrupt request pin (IRQ), 
+and reset pin (RST) used for SPI communication with the BluefruitLE module, 
+the size of the buffer used for storing data, and a boolean constant indicating 
+whether to enable verbose mode for the BluefruitLE module. */
+
+#define BLUEFRUIT_SPI_CS      8        // Define the chip select pin for SPI communication
+#define BLUEFRUIT_SPI_IRQ     7        // Define the interrupt request pin for SPI communication
+#define BLUEFRUIT_SPI_RST     4        // Define the reset pin for SPI communication
+#define BUFSIZE               128      // Define the size of the buffer to store data
+#define VERBOSE_MODE          true     // Define whether to enable verbose mode for BluefruitLE
+
+/*This line creates an instance of the Adafruit_BluefruitLE_SPI class and assigns 
+it to the variable ble. The constructor for this class takes three arguments, which 
+are the chip select pin, interrupt request pin, and reset pin respectively.*/
+
+Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);  // Create an instance of the Adafruit_BluefruitLE_SPI class
+
+/*These lines declare three variables, converted, lastClickTime, and debounceDelay. 
+converted is a boolean variable used later in the code to indicate whether data has 
+been converted. lastClickTime is an unsigned long variable that stores the time when 
+the last button click was detected. debounceDelay is a constant integer variable that 
+sets the debounce delay time for the button.*/
+
+bool converted;  // Declare a boolean variable named "converted"
+unsigned long lastClickTime = 0;  // Declare an unsigned long variable named "lastClickTime" and initialize it to 0
+const int debounceDelay = 50;     // Declare a constant integer variable named "debounceDelay" and initialize it to 50
+
+/*This is the setup function. It is called once when the program starts. In this 
+function, there is a 500ms delay followed by a call to the begin() function of the 
+ble object to initialize the BluefruitLE module with verbose mode. The isConnected() 
+function is called to check whether the BluefruitLE module is connected. The setMode() 
+function is called to set the BluefruitLE module to data mode for communication. The 
+next two lines set up the ADC (analog-to-digital converter) used to read input from a 
+button. The converted variable is set to true to indicate that data has been converted.*/
+
+void setup(void) {  // Start of the setup function
+ 
+  delay(500);  // Wait for 500 milliseconds
+
+  ble.begin(VERBOSE_MODE);   // Initialize the BluefruitLE SPI communication with verbose mode
+  ble.isConnected();         // Check if BluefruitLE is connected
+  ble.setMode(BLUEFRUIT_MODE_DATA);  // Set the BluefruitLE module to data mode for communication
+ 
+  ADCSRA = 0b10000111;   // Set ADC control and status register to enable ADC and set prescaler to 128
+  ADMUX = 0b11000111;    // Set ADC multiplexer register to use internal 1.1V reference and select ADC7 (A0) as the input
+  converted = true;      // Set the "converted" variable to true to indicate that data has been converted
+ 
+}  // End of the setup function
+
+
+int fsrReading1;    // Declare an integer variable for analog reading from FSR1 resistor divider
+int fsrReading2;    // Declare an integer variable for analog reading from FSR2 resistor divider
+const int threshold = 5;  // Declare a constant integer variable for the minimum reading required to register as "pressed"
+float Percent;     // Declare a floating-point variable to store the percentage of FSR1 pressed
+float value; // Declare a floating-point variable to store the fixed Percent
+float x; // Declare a floating-point variable to be used in the fixed Percent calculations.
+unsigned long startTime = 0; // Declare an unsigned long integer variable to store the start time of a click
+bool clickRegistered = false; // Declare a boolean variable to indicate if a click has been registered
+bool isLeftClick = false; // Declare a boolean variable to indicate if the click is a left click
+
+
+void loop() { // start the main program loop
+ 
+  if (converted) { // if converted is true
+    bitSet(ADCSRA, ADSC); // set ADSC bit to start the conversion
+    converted = false; // set converted to false
+  }
+  if (bit_is_clear(ADCSRA, ADSC)) { // check if the conversion is complete
+    if (ADMUX == 0b11000111) { // if input is FSR1, ADC7 (A0)
+      fsrReading1 = ADC; // read the analog value from the FSR1 and store it in fsrReading1 to compare
+      if (fsrReading1 >= threshold) { // check if the reading is above the threshold
+        Percent = ((fsrReading1/1023.0) * 100.0); // calculate the percentage of FSR1 pressed
+        if (Percent < 80.0) { //Checks if Percent is less than 80.0. This is used to get a more linear response
+          value = ((Percent/80.0) * 15.0); // Percent is scaled to values of 0.0 to 20.0
+          ble.print(value); //sends the value to central device
+          ble.println("%"); // sends '%' and new line after
+        } else { // If Percent is greater than 80.0
+          x = ((Percent - 80.0) / 18.0); // 97.75 was highest Percent value reached. x will always be less than 1. 
+          value = ((x * 85.0) + 15.0); //Scale x to the last range of values from 80.0 to 100.0
+          ble.print(value); //sends the value to central device
+          ble.println("%"); //sends '%' and new line after
+        }
+      }
+      ADMUX = 0b11000000; // switch to input FSR2, ADC0 (A5)
+      converted = true; // set converted to true
+    } else if (ADMUX == 0b11000000) { // if input is FSR2
+      fsrReading2 = ADC; // read the analog value from the FSR2 and store it in fsrReading2
+      if (fsrReading2 > threshold) { // check if the reading is above the threshold
+        if (!clickRegistered) { // check if a click has not been registered
+          startTime = millis(); // record the start time of the click
+          clickRegistered = true; // set the clickRegistered flag to true
+          isLeftClick = false; // reset the isLeftClick flag
+        } else { // if a click has been registered
+          unsigned long duration = millis() - startTime; // calculate the duration of the click
+          if (duration >= 5000 && !isLeftClick) { // if the duration is more than 5 seconds and is not a left click yet
+            ble.println("L"); // send a message to the Bluetooth module indicating a left click
+            isLeftClick = true; // set the isLeftClick flag to true
+          }
+        }
+      } else { // if FSR2 is not pressed
+        if (clickRegistered) { // check if a click has been registered
+          if (!isLeftClick) { // if it's not a left click yet
+            unsigned long duration = millis() - startTime; // calculate the duration of the click
+            if (duration < 5000) { // if the duration is less than 5 seconds
+              ble.println("R"); //Right click print
+            } else {  //If the duration is equal to or greater than 5000 milliseconds
+              ble.println("L"); //Left click print
+              isLeftClick = true; //set isLeftClick to true.
+            }
+          }
+          clickRegistered = false; //Reset the clickRegistered flag
+          startTime = 0; //Reset startTime to 0
+        }
+      }
+     
+      ADMUX = 0b11000111; //Set the analog input channel to read from the FSR1 sensor.
+      converted = true; //converted back to true
+    }
+  }
+  delay(50); //Delay for 100 milliseconds before starting the next iteration of the loop.
+}
 
