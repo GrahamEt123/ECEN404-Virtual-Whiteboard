@@ -120,6 +120,6 @@ void loop() { // start the main program loop
       converted = true; //converted back to true
     }
   }
-  delay(50); //Delay for 100 milliseconds before starting the next iteration of the loop.
+  delay(50); //Delay for 50 milliseconds before starting the next iteration of the loop.
 }
 
