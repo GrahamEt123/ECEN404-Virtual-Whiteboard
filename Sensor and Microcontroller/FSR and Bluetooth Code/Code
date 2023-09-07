@@ -38,7 +38,7 @@ button. The converted variable is set to true to indicate that data has been con
 
 void setup(void) {  // Start of the setup function
  
-  delay(500);  // Wait for 500 milliseconds
+  delay(50);  // Wait for 50 milliseconds
 
   ble.begin(VERBOSE_MODE);   // Initialize the BluefruitLE SPI communication with verbose mode
   ble.isConnected();         // Check if BluefruitLE is connected
@@ -120,6 +120,6 @@ void loop() { // start the main program loop
       converted = true; //converted back to true
     }
   }
-  delay(50); //Delay for 50 milliseconds before starting the next iteration of the loop.
+  delay(10); //Delay for 10 milliseconds before starting the next iteration of the loop.
 }
 
