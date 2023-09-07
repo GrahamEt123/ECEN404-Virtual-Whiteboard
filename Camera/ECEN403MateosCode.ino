@@ -67,7 +67,7 @@ void scan_callback(ble_gap_evt_adv_report_t* report)
   if ( Bluefruit.Scanner.checkReportForService(report, clientUart) )
   {
     Serial.print("Attempting to connect ... ");
-    if (static_cast<String>(mac_address) == "C0:D2:15:DF:C8:45")
+    if (static_cast<String>(mac_address) == "E4:71:96:A5:0A:BB")
     {
     // Connect to device with bleuart service in advertising
     Bluefruit.Central.connect(report);
