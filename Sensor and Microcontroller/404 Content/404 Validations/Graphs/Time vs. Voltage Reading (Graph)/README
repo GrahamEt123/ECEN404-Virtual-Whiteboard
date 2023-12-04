@@ -1,1 +1,1 @@
-
+This graph plots the voltage that the microcontoller reads when it is integrated with the power supply. This was tested for 1 hour with voltage readings every 10 seconds. This validated that the power supply was providing the correct voltage need. It also validated that the microcontroller was reading the correct voltage value so that it can determine the sensor value when pressed. The sensors are technically resistors (Force Sensitive Resistor). The are a part of a voltage divider circuit that utilizes the voltage levels being provided to the microcontroller. 
