@@ -1,1 +1,1 @@
-
+This is the PCB that was created in 404. It allows the microcontroller to integrate with the power supply and incorporate the pressure sensors through terminal blocks. The terminal blocks that are connected to the sensors are a part of a voltage divider circuit that was created in 403.
