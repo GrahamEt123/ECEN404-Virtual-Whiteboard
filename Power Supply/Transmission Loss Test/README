@@ -2,4 +2,4 @@ This folder shows the test and calculations for the transmission losses through 
 supplying (12v .15amps) which is the max draw of the highest intensity system in the project (Mateo's camera/microcontroller system)
 
 Conclusion: When supplied (12v .15amps) the load draws from the convertor (5v .261amps) compared to the ideal draw (5v .36amps)
-This gives a power transmission percentage of 72% which exceeds the validation requirement of 70%
+This gives a power loss of 27.5 which validates the power loss requirement of <30% losses. 
