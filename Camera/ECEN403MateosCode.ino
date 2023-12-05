@@ -9,8 +9,8 @@ void setup()
   Serial.begin(115200);
   while ( !Serial ) delay(10);   // for nrf52840 with native usb, allows monitor to open before printing
 
-  Serial.println("ECEN 403 test code");
-  Serial.println("-----------------------------------\n");
+  //Serial.println("ECEN 404 Bluetooth Central");
+  //Serial.println("-----------------------------------\n");
   
   // Initialize Bluefruit with maximum connections as Peripheral = 0, Central = 1
   Bluefruit.begin(0, 1);
@@ -57,22 +57,15 @@ void scan_callback(ble_gap_evt_adv_report_t* report)
   // Check that we are connecting to desired device via MAC address
   char mac_address[18];
   snprintf(mac_address, 18, "%02X:%02X:%02X:%02X:%02X:%02X", report->peer_addr.addr[5], report->peer_addr.addr[4], report->peer_addr.addr[3], report->peer_addr.addr[2], report->peer_addr.addr[1], report->peer_addr.addr[0]);
-  Serial.println(mac_address);
-  // Check if advertising contain BleUart service
-  if ( Bluefruit.Scanner.checkReportForUuid(report, BLEUART_UUID_SERVICE) )
-  {
-    Serial.println("BLE UART service detected");
-  }
 
   if ( Bluefruit.Scanner.checkReportForService(report, clientUart) )
   {
-    Serial.print("Attempting to connect ... ");
     if (static_cast<String>(mac_address) == "E4:71:96:A5:0A:BB")
     {
     // Connect to device with bleuart service in advertising
     Bluefruit.Central.connect(report);
     } else {
-        Serial.print("Incorrect device detected\n");
+        //Serial.print("Incorrect device detected\n");
         Bluefruit.Scanner.resume();
     }
   }else
@@ -89,52 +82,52 @@ void connect_callback(uint16_t conn_handle)
 {
   Serial.println("Connected");
 
-  Serial.print("Dicovering Device Information ... ");
+  //Serial.print("Dicovering Device Information ... ");
   if ( clientDis.discover(conn_handle) )
   {
-    Serial.println("Found it");
+    //Serial.println("Found it");
     char buffer[32+1];
     
     // read and print out Manufacturer
     memset(buffer, 0, sizeof(buffer));
     if ( clientDis.getManufacturer(buffer, sizeof(buffer)) )
     {
-      Serial.print("Manufacturer: ");
-      Serial.println(buffer);
+      //Serial.print("Manufacturer: ");
+      //Serial.println(buffer);
     }
 
     // read and print out Model Number
     memset(buffer, 0, sizeof(buffer));
     if ( clientDis.getModel(buffer, sizeof(buffer)) )
     {
-      Serial.print("Model: ");
-      Serial.println(buffer);
+     // Serial.print("Model: ");
+      //Serial.println(buffer);
     }
 
-    Serial.println();
+    //Serial.println();
   }else
   {
-    Serial.println("Found NONE");
+    //Serial.println("Found NONE");
   }
 
-  Serial.print("Dicovering Battery ... ");
+  //Serial.print("Dicovering Battery ... ");
   if ( clientBas.discover(conn_handle) )
   {
-    Serial.println("Found it");
+    /*Serial.println("Found it");
     Serial.print("Battery level: ");
     Serial.print(clientBas.read());
-    Serial.println("%");
+    Serial.println("%");*/
   }else
   {
-    Serial.println("Found NONE");
+    //Serial.println("Found NONE");
   }
 
   if ( clientUart.discover(conn_handle) )
   {
-    Serial.println("Enable TXD's notify");
+    //Serial.println("Enable TXD's notify");
     clientUart.enableTXD();
 
-    Serial.println("Ready to receive from peripheral");
+    //Serial.println("Ready to receive from peripheral");
   }else
   { 
     // disconnect since we couldn't find bleuart service
@@ -152,7 +145,7 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason)
   (void) conn_handle;
   (void) reason;
   
-  Serial.print("Disconnected, reason = 0x"); Serial.println(reason, HEX);
+  //Serial.print("Disconnected, reason = 0x"); Serial.println(reason, HEX);
 }
 
 /**
@@ -183,10 +176,10 @@ void loop()
       {
         delay(2); // delay a bit for all characters to arrive
         
-        char str[3] = { 0 };
-        Serial.readBytes(str, 3);
-        
+        char str[1] = { 0 };
+        Serial.readBytes(str, 1);
         clientUart.print( str );
+        delay(10);
       }
     }
   }
