@@ -1,0 +1,136 @@
+import cv2 as cv
+import mediapipe as mp
+import pyautogui as pag
+import serial
+import numpy as np
+import math
+import random
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
+from time import *
+from time import sleep
+from pynput.keyboard import Key, Controller
+
+ser = serial.Serial('COM3', timeout=0.05)
+
+mp_drawing = mp.solutions.drawing_utils
+mp_drawing_styles = mp.solutions.drawing_styles
+mp_hands = mp.solutions.hands
+
+# For static images:
+# static image function lets you control how mediapipe will reagard inputs
+# when false it regards inputs as a stream or video where they are related
+# when false it takes every input as an uncorrelated picture
+
+# For webcam
+e1 = 0
+e2 = 0
+pos_x = 300
+pos_y = 300
+start = time()
+passes = 0
+tests = 0
+accuracy = ''
+posList = []
+late = ''
+accuracyList = []
+count = 0
+cap = cv.VideoCapture(1)
+with mp_hands.Hands( # similar to a struct in c++. It holds all the data that the model will use to set its running state
+  static_image_mode = False,
+  model_complexity = 1,
+  min_detection_confidence=0.5,
+  min_tracking_confidence=0.5,
+  max_num_hands = 1) as hands:
+  while cap.isOpened():
+    success, image = cap.read()
+    s = ser.read().decode()
+    if not success:
+      print("Ignoring empty camera frame.")
+
+      continue
+#################################
+    if_pos_x = 0
+    if_pos_y = 0
+    mf_pos_y = 0
+    mf_pos_x = 0
+    rf_pos_y = 0
+    rf_pos_x = 0
+
+    image.flags.writeable = False
+    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+    image = cv.flip(image,1)
+
+    results = hands.process(image)
+
+    if not results.multi_hand_landmarks:
+      results.multi_hand_landmarks = range(0)
+    image_height, image_width, _ = image.shape
+    for hand_landmarks in results.multi_hand_landmarks:
+
+      if_pos_x = int(hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x * image_width)
+      if_pos_y = int(hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * image_height)
+      mf_pos_y = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP].y * image_height
+      mf_pos_x = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP].x * image_width
+      rf_pos_y = hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_TIP].y * image_height
+      rf_pos_x = hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_TIP].x * image_width
+      userscreen = pag.size()
+      ht = (userscreen[1] / image_height) +0.3
+      wd = (userscreen[0] / image_width) +0.3
+      pag.FAILSAFE = False
+
+      if if_pos_y <= mf_pos_y:
+        pag.moveTo(hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x *(wd*image_width),
+        hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * (ht*image_height), duration=0.10, _pause = False)
+      if if_pos_y > mf_pos_y:
+        pag.mouseDown(hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x *(wd*image_width),
+        hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * (ht*image_height),
+        button = 'left', _pause = False)
+      else:
+        pag.mouseUp(hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x *(wd*image_width),
+        hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * (ht*image_height),
+        button = 'left', _pause = False)
+
+      if not results.multi_hand_world_landmarks:
+        continue
+    #draw hand annotations on image
+    if results.multi_hand_landmarks:
+      for hand_landmarks in results.multi_hand_landmarks:
+        mp_drawing.draw_landmarks(
+          image,
+          hand_landmarks,
+          mp_hands.HAND_CONNECTIONS,
+          mp_drawing_styles.get_default_hand_landmarks_style(),
+          mp_drawing_styles.get_default_hand_connections_style())
+
+    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+
+    cv.imshow('Mediapipe Hands', image)
+
+    print(s)
+    s2 = 10
+    i = 0
+    if (s.replace('.', '').isnumeric() == True):
+      s2 = int(s)
+      i = 1
+      if ((10 > s2) and (s2 >= 7)):
+          pag.hotkey('ctrl', 'pgup')
+          sleep(0.1)
+          s2 = 10
+          s = ''
+      if (s2 < 7):
+          pag.hotkey('ctrl', 'pgdn')
+          sleep(0.1)
+          s2 = 10
+          s = ''
+    if (s == 'R'):
+      pag.hotkey('ctrl', 'z')
+      sleep(0.05)
+    if (s == 'L'):
+      pag.hotkey('ctrl', 'y')
+      sleep(0.05)
+
+    if cv.waitKey(1) == ord('q'):
+     break
+
+cap.release()
