@@ -1,1 +1,2 @@
-Folder for the Camera/ADC and Central Device subsystem
+Folder for the Camera/ADC and Central Device subsystem.
+Contains both the Bluetooth central code and the version of the image tracking used for the demo.
